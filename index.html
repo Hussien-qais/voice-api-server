@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تحويل النص إلى صوت</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 50px;
+      background-color: #f9f9f9;
+    }
+    textarea {
+      width: 80%;
+      height: 150px;
+      margin-bottom: 20px;
+      padding: 10px;
+      font-size: 18px;
+    }
+    select, input[type=range] {
+      width: 80%;
+      margin: 10px 0;
+      padding: 8px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #audioPlayer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>تحويل النص إلى صوت باستخدام ElevenLabs</h1>
+
+<textarea id="text" placeholder="اكتب النص هنا..."></textarea><br>
+
+<label for="voiceSelect">اختيار نبرة الصوت:</label><br>
+<select id="voiceSelect">
+  <option value="en_us_male">صوت أمريكي ذكر</option>
+  <option value="en_us_female">صوت أمريكي أنثى</option>
+  <option value="ar_sa_male">صوت عربي ذكر</option>
+  <option value="ar_sa_female">صوت عربي أنثى</option>
+</select><br>
+
+<label for="rate">سرعة الصوت:</label><br>
+<input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"><br>
+
+<label for="pitch">نغمة الصوت:</label><br>
+<input type="range" id="pitch" min="0" max="2" step="0.1" value="1"><br>
+
+<button onclick="generateAudio()">توليد الصوت</button>
+
+<audio id="audioPlayer" controls></audio>
+
+<script>
+  async function generateAudio() {
+    const text = document.getElementById('text').value;
+    const voice_id = document.getElementById('voiceSelect').value;
+    const rate = document.getElementById('rate').value;
+    const pitch = document.getElementById('pitch').value;
+
+    if (!text.trim()) {
+      alert('الرجاء كتابة نص');
+      return;
+    }
+
+    const response = await fetch('http://localhost:3000/generate-audio', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        text,
+        voice_id,
+        rate,
+        pitch
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const audioUrl = data.audioUrl;
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.src = audioUrl;
+      audioPlayer.play();
+    } else {
+      alert('حدث خطأ أثناء توليد الصوت');
+    }
+  }
+</script>
+
+</body>
+</html>
