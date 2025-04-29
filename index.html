@@ -77,27 +77,33 @@
       return;
     }
 
-    const response = await fetch('http://localhost:3000/generate-audio', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text,
-        voice_id,
-        rate,
-        pitch
-      })
-    });
+    try {
+      const response = await fetch('http://localhost:3000/generate-audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text,
+          voice_id,
+          rate,
+          pitch
+        })
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      const audioUrl = data.audioUrl;
-      const audioPlayer = document.getElementById('audioPlayer');
-      audioPlayer.src = audioUrl;
-      audioPlayer.play();
-    } else {
-      alert('حدث خطأ أثناء توليد الصوت');
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);  // لتتأكد من أن الصوت تم توليده بنجاح
+        const audioUrl = data.audioUrl;
+        const audioPlayer = document.getElementById('audioPlayer');
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+      } else {
+        alert('حدث خطأ أثناء توليد الصوت');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('حدث خطأ في الاتصال بالخادم');
     }
   }
 </script>
