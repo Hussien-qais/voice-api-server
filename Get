@@ -1,0 +1,5 @@
+git init
+git remote add origin https://github.com/Hussien-qais/voice-api-server.git
+git add .
+git commit -m "إضافة مشروع توليد الصوت"
+git push -u origin master
