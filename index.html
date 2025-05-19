@@ -1,111 +1,90 @@
+ 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تحويل النص إلى صوت</title>
+  <title>تحويل Excel إلى JSON</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 50px;
-      background-color: #f9f9f9;
+      font-family: Arial;
+      direction: rtl;
+      padding: 20px;
+      background-color: #f0f0f0;
     }
-    textarea {
-      width: 80%;
-      height: 150px;
-      margin-bottom: 20px;
+    h2 {
+      color: #333;
+    }
+    #json-output {
+      white-space: pre-wrap;
+      background: #fff;
       padding: 10px;
-      font-size: 18px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      max-height: 400px;
+      overflow: auto;
     }
-    select, input[type=range] {
-      width: 80%;
-      margin: 10px 0;
-      padding: 8px;
+    input, button {
+      padding: 8px 16px;
+      margin-top: 10px;
       font-size: 16px;
     }
     button {
-      padding: 12px 24px;
-      font-size: 18px;
       background-color: #4CAF50;
       color: white;
       border: none;
       cursor: pointer;
-      margin-top: 20px;
     }
     button:hover {
       background-color: #45a049;
-    }
-    #audioPlayer {
-      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-<h1>تحويل النص إلى صوت باستخدام ElevenLabs</h1>
-
-<textarea id="text" placeholder="اكتب النص هنا..."></textarea><br>
-
-<label for="voiceSelect">اختيار نبرة الصوت:</label><br>
-<select id="voiceSelect">
-  <option value="en_us_male">صوت أمريكي ذكر</option>
-  <option value="en_us_female">صوت أمريكي أنثى</option>
-  <option value="ar_sa_male">صوت عربي ذكر</option>
-  <option value="ar_sa_female">صوت عربي أنثى</option>
-</select><br>
-
-<label for="rate">سرعة الصوت:</label><br>
-<input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"><br>
-
-<label for="pitch">نغمة الصوت:</label><br>
-<input type="range" id="pitch" min="0" max="2" step="0.1" value="1"><br>
-
-<button onclick="generateAudio()">توليد الصوت</button>
-
-<audio id="audioPlayer" controls></audio>
+<h2>رفع ملف Excel وتحويله إلى JSON</h2>
+<input type="file" id="upload" accept=".xlsx, .xls" />
+<br>
+<button id="download-json" style="display:none;">تحميل JSON</button>
+<pre id="json-output"></pre>
 
 <script>
-  async function generateAudio() {
-    const text = document.getElementById('text').value;
-    const voice_id = document.getElementById('voiceSelect').value;
-    const rate = document.getElementById('rate').value;
-    const pitch = document.getElementById('pitch').value;
+  let currentJson = null;
 
-    if (!text.trim()) {
-      alert('الرجاء كتابة نص');
-      return;
-    }
+  document.getElementById('upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    try {
-      const response = await fetch('http://localhost:3000/generate-audio', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          text,
-          voice_id,
-          rate,
-          pitch
-        })
-      });
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data);  // لتتأكد من أن الصوت تم توليده بنجاح
-        const audioUrl = data.audioUrl;
-        const audioPlayer = document.getElementById('audioPlayer');
-        audioPlayer.src = audioUrl;
-        audioPlayer.play();
-      } else {
-        alert('حدث خطأ أثناء توليد الصوت');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('حدث خطأ في الاتصال بالخادم');
-    }
-  }
+      const sheetName = workbook.SheetNames[0]; // استخدم أول ورقة
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+
+      currentJson = json; // حفظ البيانات
+      document.getElementById('json-output').textContent = JSON.stringify(json, null, 2);
+      document.getElementById('download-json').style.display = 'inline-block';
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  document.getElementById('download-json').addEventListener('click', function() {
+    if (!currentJson) return;
+
+    const blob = new Blob([JSON.stringify(currentJson, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "converted.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 </script>
 
 </body>
